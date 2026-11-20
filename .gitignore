@@ -1,0 +1,16 @@
+# Build trees (one per platform)
+/build-*/
+build/
+
+# Packaged output produced by scripts/*.sh and CI
+/dist/
+
+# Bundled third-party dependency. CMakeLists.txt falls back to FetchContent
+# (JUCE 8.0.4) when external/JUCE is absent, which is what CI uses.
+/external/JUCE/
+
+# Editor / OS cruft
+.DS_Store
+*.swp
+.idea/
+.vscode/

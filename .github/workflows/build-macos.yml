@@ -1,0 +1,83 @@
+name: Build macOS
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      archs:
+        description: "CMAKE_OSX_ARCHITECTURES (e.g. arm64;x86_64, arm64, x86_64)"
+        required: false
+        default: "arm64;x86_64"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    name: macOS (universal VST3 + Standalone)
+    runs-on: macos-14
+    env:
+      CMAKE_OSX_ARCHITECTURES: ${{ github.event.inputs.archs || 'arm64;x86_64' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache JUCE (FetchContent)
+        uses: actions/cache@v4
+        with:
+          path: build-macos/_deps
+          key: juce-8.0.4-${{ runner.os }}
+          restore-keys: |
+            juce-8.0.4-
+
+      - name: Build
+        run: bash scripts/build_macos.sh
+
+      - name: Verify architectures
+        run: |
+          find dist/macos -path '*/Contents/MacOS/*' -type f -print0 | \
+            while IFS= read -r -d '' bin; do
+              printf '%s -> ' "$bin"
+              lipo -archs "$bin"
+            done
+
+      - name: Upload Mac artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SoundCanvas-macOS-${{ github.sha }}
+          path: dist/macos
+          if-no-files-found: error
+
+  release:
+    name: Publish release assets
+    needs: macos
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Package zips
+        run: |
+          cd artifacts
+          for dir in */; do
+            name="${dir%/}"
+            (cd "$dir" && zip -r "../${name}.zip" .)
+          done
+          ls -la ..
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" artifacts/*.zip \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
