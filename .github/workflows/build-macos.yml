@@ -7,6 +7,10 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      runner:
+        description: "Runner label (macos-13 is Intel; macos-14/macos-latest are arm64)"
+        required: false
+        default: "macos-13"
       archs:
         description: "CMAKE_OSX_ARCHITECTURES (e.g. arm64;x86_64, arm64, x86_64)"
         required: false
@@ -19,7 +23,7 @@ concurrency:
 jobs:
   macos:
     name: macOS (universal VST3 + Standalone)
-    runs-on: macos-14
+    runs-on: ${{ github.event.inputs.runner || 'macos-13' }}
     env:
       CMAKE_OSX_ARCHITECTURES: ${{ github.event.inputs.archs || 'arm64;x86_64' }}
     steps:
