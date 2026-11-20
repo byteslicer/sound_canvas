@@ -1,0 +1,21 @@
+name: Runner smoke test
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - run: uname -a
+
+  mac13:
+    runs-on: macos-13
+    steps:
+      - run: uname -a
+
+  mac15intel:
+    runs-on: macos-15-intel
+    steps:
+      - run: uname -a
