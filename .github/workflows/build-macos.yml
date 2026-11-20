@@ -1,31 +1,33 @@
 name: Build macOS
 
 on:
-  push:
-    branches: [main, master]
-    tags: ["v*"]
-  pull_request:
+  workflow_call:
+    inputs:
+      runner:
+        type: string
+        required: false
+        default: macos-15-intel
+      archs:
+        type: string
+        required: false
+        default: "arm64;x86_64"
   workflow_dispatch:
     inputs:
       runner:
-        description: "macOS runner label (macos-15-intel works; macos-14/macos-latest are arm64 and unavailable)"
+        description: "macOS runner label"
         required: false
-        default: "macos-15-intel"
+        default: macos-15-intel
       archs:
-        description: "CMAKE_OSX_ARCHITECTURES (e.g. arm64;x86_64, arm64, x86_64)"
+        description: "CMAKE_OSX_ARCHITECTURES"
         required: false
         default: "arm64;x86_64"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   macos:
     name: macOS (universal VST3 + Standalone)
-    runs-on: ${{ github.event.inputs.runner || 'macos-15-intel' }}
+    runs-on: ${{ inputs.runner || 'macos-15-intel' }}
     env:
-      CMAKE_OSX_ARCHITECTURES: ${{ github.event.inputs.archs || 'arm64;x86_64' }}
+      CMAKE_OSX_ARCHITECTURES: ${{ inputs.archs || 'arm64;x86_64' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,39 +51,9 @@ jobs:
               lipo -archs "$bin"
             done
 
-      - name: Upload Mac artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: SoundCanvas-macOS-${{ github.sha }}
+          name: SoundCanvas-macOS
           path: dist/macos
           if-no-files-found: error
-
-  release:
-    name: Publish release assets
-    needs: macos
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Package zips
-        run: |
-          cd artifacts
-          for dir in */; do
-            name="${dir%/}"
-            (cd "$dir" && zip -r "../${name}.zip" .)
-          done
-          ls -la ..
-
-      - name: Create GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "$GITHUB_REF_NAME" artifacts/*.zip \
-            --title "$GITHUB_REF_NAME" \
-            --generate-notes

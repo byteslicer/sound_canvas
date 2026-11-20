@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(SoundCanvas VERSION 1.0.0 LANGUAGES C CXX)
+project(SoundCanvas VERSION 1.0.0 LANGUAGES C CXX) # x-release-please-version
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

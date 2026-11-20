@@ -1,0 +1,14 @@
+{
+  "release-type": "simple",
+  "include-component-in-tag": false,
+  "include-v-in-tag": true,
+  "bootstrap-sha": "9ad0b23cdfe5cf5709bf1268182158fb58086a47",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "extra-files": [
+        { "type": "generic", "path": "CMakeLists.txt" }
+      ]
+    }
+  }
+}
