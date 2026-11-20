@@ -1,5 +1,6 @@
 # Build Sound Canvas for Windows (VST3 + Standalone) and stage the artifacts in
-# dist/windows/. Run on Windows with Visual Studio 2022 (or the Build Tools).
+# dist/windows/. Run on Windows with Visual Studio (or the Build Tools); the
+# Visual Studio generator is auto-detected by CMake.
 $ErrorActionPreference = "Stop"
 
 $Root = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
@@ -8,7 +9,7 @@ Set-Location $Root
 $Jobs = [Environment]::ProcessorCount
 
 Write-Host "=== Building Sound Canvas for Windows ==="
-cmake -B build-windows -G "Visual Studio 17 2022" -A x64 `
+cmake -B build-windows -A x64 `
     -DCMAKE_BUILD_TYPE=Release `
     -DBUILD_SOUNDCANVAS_TESTS=OFF
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
